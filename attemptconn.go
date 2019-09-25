@@ -3,13 +3,18 @@ package dbutils
 import (
 	"database/sql"
 	"fmt"
+	"strings"
 	"time"
 )
 
 type errors []error
 
 func (e errors) Error() string {
-	return ""
+	var sb strings.Builder
+	for _, err := range e {
+		sb.WriteString(err.Error() + "\n")
+	}
+	return sb.String()
 }
 
 // tries- default 0, runs 1000 attempts
@@ -44,7 +49,8 @@ func AttemptConnect(driver string, ds DataSource, tries int, wait time.Duration)
 	err = db.Ping()
 	if err != nil {
 		db.Close()
-		return nil, false, fmt.Errorf("dbutils.AttemptConnect: while pinging database: %w", err)
+		errs = append(errs, fmt.Errorf("dbutils.AttemptConnect: while pinging database: %w", err))
+		return nil, false, errs
 	}
 
 	return db, true, errs
