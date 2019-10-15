@@ -1,0 +1,27 @@
+version: '3.7'
+
+networks:
+  dbutils-tests:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:9.6-alpine
+    environment:
+      POSTGRES_USER: dbutils
+      POSTGRES_PASSWORD: dbutils
+      POSTGRES_DB: dbutils
+    logging:
+      driver: none
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    networks:
+      - dbutils-tests
+
+
+  tests:
+    build:
+      context: ..
+      dockerfile: ./test/Dockerfile
+    networks:
+      - dbutils-tests

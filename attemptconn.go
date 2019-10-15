@@ -3,19 +3,9 @@ package dbutils
 import (
 	"database/sql"
 	"fmt"
-	"strings"
+	"github.com/hashicorp/go-multierror"
 	"time"
 )
-
-type errors []error
-
-func (e errors) Error() string {
-	var sb strings.Builder
-	for _, err := range e {
-		sb.WriteString(err.Error() + "\n")
-	}
-	return sb.String()
-}
 
 // tries- default 0, runs 1000 attempts
 // wait - default 0, wait 1 second
@@ -24,34 +14,36 @@ func AttemptConnect(driver string, ds DataSource, tries int, wait time.Duration)
 	var err error
 
 	if wait == 0 {
-		wait = 1
+		wait = time.Second
 	}
 	if tries == 0 {
 		tries = 1000
 	}
 
-	var errs errors
-	var ok bool
+	var result *multierror.Error
 	for i := 1; i <= tries; i++ {
-		db, err = sql.Open(driver, ds.String())
+		db, err = open(driver, ds.String())
 		if err != nil {
-			errs = append(errs, fmt.Errorf("dbutils.AttemptConnect: attempt number: %d error :%w", i, err))
-			time.Sleep(time.Second * wait)
+			result = multierror.Append(result, fmt.Errorf("dbutils.AttemptConnect: attempt number: %d error: %w", i, err))
+			time.Sleep(wait)
 			continue
 		}
-		ok = true
-		break
+		return db, true, result.ErrorOrNil()
 	}
-	if !ok {
-		return nil, false, errs
+
+	return nil, false, result
+}
+
+func open(driver, dataSource string) (*sql.DB, error) {
+	db, err := sql.Open(driver, dataSource)
+	if err != nil {
+		return nil, fmt.Errorf("dbutils.open: error while opening db conn: %w", err)
 	}
 
 	err = db.Ping()
 	if err != nil {
 		db.Close()
-		errs = append(errs, fmt.Errorf("dbutils.AttemptConnect: while pinging database: %w", err))
-		return nil, false, errs
+		return nil, fmt.Errorf("dbutils.open: error while pinging db conn: %w", err)
 	}
-
-	return db, true, errs
+	return db, nil
 }
