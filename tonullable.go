@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-func toNullable(given interface{}) interface{} {
+func ToNullable(given interface{}) interface{} {
 	switch given.(type) {
 	case int, int8, int16, int32, int64:
 		n := reflect.ValueOf(given).Int()
@@ -32,10 +32,10 @@ func toNullable(given interface{}) interface{} {
 	}
 }
 
-func toNullableList(args ...interface{}) []interface{} {
+func ToNullableList(args ...interface{}) []interface{} {
 	res := make([]interface{}, len(args))
 	for i, obj := range args {
-		res[i] = toNullable(obj)
+		res[i] = ToNullable(obj)
 	}
 	return res
 }

@@ -12,11 +12,11 @@ func TestToNullable(t *testing.T) {
 	assert.Equal(sql.NullInt64{
 		Int64: 100,
 		Valid: true,
-	}, toNullable(100))
+	}, ToNullable(100))
 	assert.Equal(sql.NullInt64{
 		Int64: 0,
 		Valid: false,
-	}, toNullable(0))
+	}, ToNullable(0))
 
 	assert.Equal([]interface{}{
 		sql.NullString{
@@ -35,5 +35,5 @@ func TestToNullable(t *testing.T) {
 			Int64: 0,
 			Valid: false,
 		},
-	}, toNullableList("test", "", 100, 0))
+	}, ToNullableList("test", "", 100, 0))
 }
