@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func newDockerPostgresDB(user, password, dbName, schema string) (func() error, error) {
+func NewDockerPostgresDB(user, password, dbName, schema string) (func() error, error) {
 	dockerStartWait := 60 * time.Second
 
 	pool, err := dockertest.NewPool("")
