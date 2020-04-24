@@ -3,6 +3,7 @@ package dbutils
 import (
 	"database/sql"
 	"fmt"
+	_ "github.com/lib/pq"
 	"github.com/ory/dockertest"
 	"time"
 )
