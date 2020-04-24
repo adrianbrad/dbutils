@@ -7,12 +7,12 @@ import (
 	"time"
 )
 
-func NewDockerPostgresDB(user, password, dbName, schema string) (func() error, error) {
+func NewDockerPostgresDB(user, password, dbName, schema string) (func() error, string, error) {
 	dockerStartWait := 60 * time.Second
 
 	pool, err := dockertest.NewPool("")
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	res, err := pool.Run("postgres", "11-alpine", []string{
@@ -21,7 +21,7 @@ func NewDockerPostgresDB(user, password, dbName, schema string) (func() error, e
 		fmt.Sprintf("POSTGRES_DB=%s", dbName),
 	})
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	purge := func() { pool.Purge(res) }
@@ -48,22 +48,22 @@ func NewDockerPostgresDB(user, password, dbName, schema string) (func() error, e
 	select {
 	case err := <-errChan:
 		purge()
-		return nil, err
+		return nil, "", err
 	case <-time.After(dockerStartWait):
 		purge()
-		return nil, fmt.Errorf("timeout on checking postgres connection")
+		return nil, "", fmt.Errorf("timeout on checking postgres connection")
 	case <-done:
 		close(errChan)
 	}
 
 	defer db.Close()
 	if _, err := db.Exec(schema); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
 	teardown := func() error {
 		return pool.Purge(res)
 	}
 
-	return teardown, nil
+	return teardown, res.GetPort("5432/tcp"), nil
 }
