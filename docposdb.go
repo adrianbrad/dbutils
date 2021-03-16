@@ -47,7 +47,7 @@ func NewDockerPostgresDB(user, password, dbName, schema string) (func() error, s
 	}()
 
 	select {
-	case err := <-errChan:
+	case err = <-errChan:
 		purge()
 		return nil, "", err
 	case <-time.After(dockerStartWait):
@@ -58,7 +58,8 @@ func NewDockerPostgresDB(user, password, dbName, schema string) (func() error, s
 	}
 
 	defer db.Close()
-	if _, err := db.Exec(schema); err != nil {
+	if _, err = db.Exec(schema); err != nil {
+		purge()
 		return nil, "", err
 	}
 
